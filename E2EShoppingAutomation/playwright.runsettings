@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+	<RunConfiguration>
+
+		<!-- ביטול הרצה מקבילית (קריטי ל-Playwright) -->
+		<DisableAppDomain>True</DisableAppDomain>
+		<MaxCpuCount>1</MaxCpuCount>
+
+		<!-- משתני סביבה (לא חובה כרגע, אבל לא מזיק) -->
+		<EnvironmentVariables>
+			<PWDEBUG>0</PWDEBUG>
+		</EnvironmentVariables>
+
+	</RunConfiguration>
+</RunSettings>

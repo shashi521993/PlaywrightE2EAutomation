@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "E2EShoppingAutomation": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "PWDEBUG": "1"
+      }
+    }
+  }
+}
