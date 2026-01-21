@@ -1,89 +1,57 @@
 ﻿using Microsoft.Playwright;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using static Microsoft.Playwright.Assertions;
 
 namespace E2EShoppingAutomation.Pages
 {
     public class ProductPage : BasePage
     {
+        // Generic selector: Taking the first visible "Add to cart" button on the page
+        private ILocator AddToCartButton => Page.GetByRole(AriaRole.Button, new() { Name = "Add to cart" }).First;
+
+        private ILocator SuccessNotification => Page.Locator(".bar-notification.success");
+
+        // Generic selector for any mandatory attributes (Dropdowns, Radio buttons, Checkboxes)
+        private ILocator ProductAttributes => Page.Locator(".attributes select, .attributes input[type='radio'], .attributes input[type='checkbox']");
+
         public ProductPage(IPage page) : base(page) { }
 
-        private string AddToCartButton => "button#add-to-cart-button";
-        private string VariantDropdowns => "select";  // וריאנטים אם קיימים
-        private string CartCountSelector => "span.cart-qty"; // ספרת העגלה
-
-        /// <summary>
-        /// מוסיף רשימת מוצרים לעגלה, מחכה עד שהעגלה משתנה, ושומר צילום מסך
-        /// </summary>
-        public async Task AddItemsToCart(List<string> productUrls)
+        public async Task AddItemsToCart(List<string> urls)
         {
-            int index = 1;
-
-            foreach (var url in productUrls)
+            foreach (var url in urls)
             {
                 await Page.GotoAsync(url);
-                await WaitForPageLoad();
+                await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-                // בחר וריאנטים אם קיימים
-                var dropdowns = await Page.QuerySelectorAllAsync(VariantDropdowns);
-                var random = new Random();
-
-                foreach (var dropdown in dropdowns)
+                // Generic Logic: Find all possible options and select the first available for each
+                var attributes = await ProductAttributes.AllAsync();
+                foreach (var attribute in attributes)
                 {
-                    var options = await dropdown.QuerySelectorAllAsync("option");
-                    if (options.Count > 1)
+                    if (await attribute.IsVisibleAsync())
                     {
-                        int randomIndex = random.Next(1, options.Count);
-                        var value = await options[randomIndex].GetAttributeAsync("value");
-                        await dropdown.SelectOptionAsync(value);
+                        string tagName = await attribute.EvaluateAsync<string>("node => node.tagName");
+
+                        if (tagName == "SELECT")
+                        {
+                            // Select the second option (index 1) because index 0 is usually "Select size"
+                            await attribute.SelectOptionAsync(new[] { new SelectOptionValue { Index = 1 } });
+                        }
+                        else
+                        {
+                            // Click for Radio buttons or Checkboxes
+                            await attribute.ClickAsync(new() { Force = true });
+                        }
                     }
                 }
 
-                // ספרת העגלה לפני ההוספה
-                var cartBeforeText = await Page.InnerTextAsync(CartCountSelector);
-                int cartBefore = int.Parse(cartBeforeText.Replace("(", "").Replace(")", "").Trim());
+                // Click the main Add to cart button
+                await AddToCartButton.ClickAsync();
 
-                // כאן נוודא שהלחיצה על Add to Cart מתבצעת בפועל
-                var addButton = await Page.QuerySelectorAsync(AddToCartButton);
-                if (addButton != null)
-                {
-                    // Scroll to the button to ensure visibility
-                    await addButton.ScrollIntoViewIfNeededAsync();
-                    // לחיצה על הכפתור
-                    await addButton.ClickAsync();
+                // Wait for success bar
+                await Expect(SuccessNotification).ToBeVisibleAsync(new() { Timeout = 10000 });
 
-                    // חזק – ודא שהלחיצה באמת מבוצעת עם Enter (כמו החיפוש)
-                    await Page.Keyboard.PressAsync("Enter");
-                }
-
-                // המתנה עד שהעגלה תשתנה, עד 10 שניות
-                try
-                {
-                    await Page.WaitForFunctionAsync($@"() => {{
-                        const cart = document.querySelector('{CartCountSelector}');
-                        return cart && parseInt(cart.innerText.replace('(', '').replace(')', '').trim()) > {cartBefore};
-                    }}", new PageWaitForFunctionOptions { Timeout = 10000 });
-                }
-                catch
-                {
-                    // אם לא השתנה, נמשיך – צילום המסך יישמר בכל מקרה
-                }
-
-                // צילום מסך תמיד
-                //await TakeScreenshot($"Screenshots/Added_Item_{index}.png");
-                await Page.ScreenshotAsync(new PageScreenshotOptions
-                {
-                    Path = $"Screenshots/Added_Item_{index}.png",
-                    FullPage = true
-                });
-
-                // חזרה לדף הקודם
-                await Page.GoBackAsync();
-                await WaitForPageLoad();
-
-                index++;
+                await TakeScreenshot($"Item_Added_{urls.IndexOf(url)}");
             }
         }
     }

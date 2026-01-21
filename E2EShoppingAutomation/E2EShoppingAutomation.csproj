@@ -1,48 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Config\AppSettings.json" />
-    <None Remove="playwright.runsettings" />
-    <None Remove="TestData\credentials.json" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="Config\appSettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Config\credentials.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="playwright.runsettings">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="playwright.runsettings">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+		<PackageReference Include="Microsoft.Playwright.NUnit" Version="1.49.0" />
+		<PackageReference Include="nunit" Version="4.2.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Config\appSettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestData\credentials.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Using Include="System.Text.RegularExpressions" />
+		<Using Include="System.Threading.Tasks" />
+		<Using Include="NUnit.Framework" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Playwright.MSTest.v4" Version="1.55.0" />
-    <PackageReference Include="MSTest" Version="4.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Microsoft.Playwright.MSTest" />
-    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
-    <Using Include="System.Text.RegularExpressions" />
-    <Using Include="System.Threading.Tasks" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Utils\" />
-    <Folder Include="Reports\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Screenshots\" />
+		<Folder Include="TestData\" />
+		<Folder Include="Utils\" />
+		<Folder Include="Reports\" />
+		<Folder Include="Pages\" />
+	</ItemGroup>
 
 </Project>

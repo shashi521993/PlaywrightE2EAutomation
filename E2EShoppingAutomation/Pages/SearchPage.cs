@@ -1,5 +1,5 @@
 ﻿using Microsoft.Playwright;
-using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,71 +7,69 @@ namespace E2EShoppingAutomation.Pages
 {
     public class SearchPage : BasePage
     {
-        public SearchPage(IPage page) : base(page)
-        {
-        }
+        public SearchPage(IPage page) : base(page) { }
 
-        private string SearchInputSelector => "input#small-searchterms";
-        private string ProductListSelector => "div.product-item";
-        private string ProductNameSelector => ".product-title a";
-        private string ProductPriceSelector => ".prices .price";
+        // Updated Locators based on your findings
+        private ILocator SearchInput => Page.Locator("#small-searchterms");
+        private ILocator SearchButton => Page.GetByRole(AriaRole.Button, new() { Name = "Search" });
+        private ILocator NextPageButton => Page.Locator(".next-page a");
 
-        /// <summary>
-        /// חיפוש מוצרים לפי שם, מחזיר עד N URLs שעומדים בתנאי המחיר
-        /// </summary>
-        public async Task<List<string>> SearchItemsByNameUnderPrice(
-            string productName,
-            decimal maxPrice,
-            int limit = 5)
+        private string ProductItemSelector = ".product-item";
+        private string PriceSelector = ".actual-price";
+        private string TitleLinkSelector = ".product-title a";
+
+        public async Task<List<string>> SearchItemsByNameUnderPrice(string query, decimal maxPrice, int limit = 3)
         {
             var resultUrls = new List<string>();
+            await SearchInput.FillAsync(query);
+            await SearchButton.ClickAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            // 1️⃣ כתיבה לשדה החיפוש
-            await FillInput(SearchInputSelector, productName);
+            bool hasMorePages = true;
 
-            // 2️⃣ ENTER – זה מה שמפעיל חיפוש אמיתי באתר
-            await Page.Keyboard.PressAsync("Enter");
-
-            // 3️⃣ המתנה לטעינת דף תוצאות
-            //await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            await Page.WaitForSelectorAsync(
-                ProductListSelector,
-                new PageWaitForSelectorOptions
-                {
-                    Timeout = 10000
-                });
-
-
-            // 4️⃣ שליפת מוצרים
-            var products = await Page.QuerySelectorAllAsync(ProductListSelector);
-
-            foreach (var product in products)
+            while (resultUrls.Count < limit && hasMorePages)
             {
-                var priceElement = await product.QuerySelectorAsync(ProductPriceSelector);
-                if (priceElement == null)
-                    continue;
+                await Page.WaitForSelectorAsync(ProductItemSelector, new() { Timeout = 5000 });
+                var productItems = await Page.Locator(ProductItemSelector).AllAsync();
 
-                var priceText = (await priceElement.InnerTextAsync())
-                    .Replace("$", "")
-                    .Trim();
-
-                if (!decimal.TryParse(priceText, out var price))
-                    continue;
-
-                if (price <= maxPrice)
+                foreach (var item in productItems)
                 {
-                    var linkElement = await product.QuerySelectorAsync(ProductNameSelector);
-                    var url = await linkElement.GetAttributeAsync("href");
+                    // בדיקה קריטית: האם כבר הגענו למקסימום שביקשת?
+                    if (resultUrls.Count >= limit) break;
 
-                    resultUrls.Add(url);
-                    Console.WriteLine($"✔ Found product: {url} | Price: {price}");
+                    var priceText = await item.Locator(PriceSelector).InnerTextAsync();
+                    decimal price = ParsePrice(priceText);
+
+                    // סינון מחיר קשיח: רק אם המחיר נמוך או שווה למה שהגדרת
+                    if (price > 0 && price <= maxPrice)
+                    {
+                        var url = await item.Locator(TitleLinkSelector).GetAttributeAsync("href");
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            var fullUrl = url.StartsWith("http") ? url : $"https://demowebshop.tricentis.com{url}";
+                            resultUrls.Add(fullUrl);
+                        }
+                    }
                 }
 
-                if (resultUrls.Count >= limit)
-                    break;
+                // דפדוף לעמוד הבא רק אם עדיין חסרים מוצרים
+                if (resultUrls.Count < limit && await NextPageButton.IsVisibleAsync())
+                {
+                    await NextPageButton.ClickAsync();
+                    await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                }
+                else
+                {
+                    hasMorePages = false;
+                }
             }
-
             return resultUrls;
+        }
+
+        private decimal ParsePrice(string priceText)
+        {
+            var cleanPrice = Regex.Replace(priceText, @"[^\d\.]", "");
+            return decimal.TryParse(cleanPrice, out decimal result) ? result : 0;
         }
     }
 }

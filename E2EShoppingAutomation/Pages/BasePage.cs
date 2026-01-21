@@ -1,5 +1,4 @@
 ﻿using Microsoft.Playwright;
-using System.Threading.Tasks;
 
 namespace E2EShoppingAutomation.Pages
 {
@@ -7,47 +6,36 @@ namespace E2EShoppingAutomation.Pages
     {
         protected readonly IPage Page;
 
-        protected BasePage(IPage page)
-        {
-            Page = page;
-        }
+        protected BasePage(IPage page) => Page = page;
 
-        // מחכה שהדף יטען
-        public async Task WaitForPageLoad()
-        {
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
-
-        // קליק על אלמנט כשנראה
+        // פונקציה ללחיצה על אלמנט - כוללת המתנה אוטומטית של פליירייט
         public async Task ClickWhenVisible(string selector)
         {
-            await Page.WaitForSelectorAsync(selector);
-            await Page.ClickAsync(selector);
+            await Page.Locator(selector).First.ClickAsync();
         }
 
-        // למלא שדה טקסט
+        // פונקציה למילוי טקסט
         public async Task FillInput(string selector, string text)
         {
-            await Page.WaitForSelectorAsync(selector);
-            await Page.FillAsync(selector, text);
+            await Page.Locator(selector).First.FillAsync(text);
         }
 
-        // צילומי מסך עם שם קובץ מותאם
-        public async Task TakeScreenshot(string filename)
+        // צילום מסך - דרישת חובה במטלה
+        public async Task TakeScreenshot(string stepName)
         {
-            await Page.ScreenshotAsync(new PageScreenshotOptions
-            {
-                Path = filename,
-                FullPage = true
-            });
+            var directory = Path.Combine(Directory.GetCurrentDirectory(), "Screenshots");
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+            var path = Path.Combine(directory, $"{stepName}_{DateTime.Now:HHmmss}.png");
+            await Page.ScreenshotAsync(new PageScreenshotOptions { Path = path });
+            Console.WriteLine($"Screenshot saved: {path}");
         }
 
-        // שליפת טקסט מאלמנט
-        public async Task<string> GetElementText(string selector)
-        {
-            await Page.WaitForSelectorAsync(selector);
-            var element = await Page.QuerySelectorAsync(selector);
-            return await element.InnerTextAsync();
-        }
+        // המתנה לטעינת הדף
+        public async Task WaitForNetworkIdle() =>
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // פונקציית עזר למקרה שקראת לה בשם אחר בדפים אחרים
+        public async Task WaitForPageLoad() => await WaitForNetworkIdle();
     }
 }
