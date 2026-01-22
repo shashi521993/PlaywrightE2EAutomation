@@ -66,3 +66,5 @@ Assumptions & Limitations
 	Currency: Logic assumes decimal-based pricing (USD) as per the site's default.
 
 	State Isolation: The automatic cart-reset mechanism ensures test reliability across consecutive runs.
+
+	The framework uses a fallback URL mechanism in case configuration files are missing, ensuring stability across different environments.
