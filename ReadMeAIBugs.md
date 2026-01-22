@@ -17,8 +17,8 @@ The Problem: This is an "Anti-Pattern" in automation. It makes tests slow (waiti
 The Fix: Replace static sleeps with dynamic waits, such as page.wait_for_selector() or page.wait_for_load_state("networkidle"). This ensures the test proceeds as soon as the UI is ready.
 
 3. Missing Validation Logic (Assertions)
-The functions perform search and filtering actions but lack any assert statements to verify the results.
+The script performs actions (search, navigation) but fails to include any verification steps to confirm the site responded correctly.
 
-The Problem: Without an assertion, the test will pass even if the search returns zero results or the prices exceed the filter limit. The script is just a "crawler" right now, not a test.
+The Problem: A test must verify that the system is in the expected state. Without an assertion, we don't know if the search actually executed, if the page crashed, or if the "No results found" message appeared when it should have. The current script just "clicks" without observing the outcome.
 
-The Fix: Add assertions to verify that the results count is > 0 and that each item's price is indeed below the maxPrice limit.
+The Fix: Add assertions to verify that the UI responded as expected. For example, verifying that the search results container is visible, or that the URL has updated correctly after the search. This confirms the site is functioning and responsive to user input.
