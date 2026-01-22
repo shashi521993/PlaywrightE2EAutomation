@@ -368,3 +368,11 @@ playwright-report/
 blob-report/
 test-results/
 playwright/.cache/
+
+
+# Custom project folders
+Screenshots/
+TestReports/
+*.png
+*.zip
+
