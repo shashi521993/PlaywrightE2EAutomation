@@ -33,12 +33,20 @@ namespace E2EShoppingAutomation.Pages
 
                         if (tagName == "SELECT")
                         {
-                            // Select the second option (index 1) because index 0 is usually "Select size"
-                            await attribute.SelectOptionAsync(new[] { new SelectOptionValue { Index = 1 } });
+                            // Get the number of options in the dropdown
+                            var optionsCount = await attribute.EvaluateAsync<int>("el => el.options.length");
+
+                            // If there's more than just the default "Select..." option
+                            if (optionsCount > 1)
+                            {
+                                // Pick a random index between 1 and the last option
+                                int randomIndex = new Random().Next(1, optionsCount);
+                                await attribute.SelectOptionAsync(new[] { new SelectOptionValue { Index = randomIndex } });
+                            }
                         }
                         else
                         {
-                            // Click for Radio buttons or Checkboxes
+                            // Click for Radio buttons or Checkboxes (remains the same)
                             await attribute.ClickAsync(new() { Force = true });
                         }
                     }
