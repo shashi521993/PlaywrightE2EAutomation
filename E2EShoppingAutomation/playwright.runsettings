@@ -8,7 +8,7 @@
   </RunConfiguration>
 
   <Playwright>
-    <BrowserName>chromium</BrowserName> <!-- או firefox / webkit -->
+    <BrowserName>chromium</BrowserName> <!-- firefox / webkit -->
     <LaunchOptions>
       <Headless>false</Headless>
       <SlowMo>500</SlowMo>
