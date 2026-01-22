@@ -21,7 +21,7 @@ namespace E2EShoppingAutomation.Pages
 
             await LoginSubmitButton.ClickAsync();
 
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await Microsoft.Playwright.Assertions.Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Log out" })).ToBeVisibleAsync(new() { Timeout = 15000 });
             await TakeScreenshot("Login_Attempt");
         }
     }
