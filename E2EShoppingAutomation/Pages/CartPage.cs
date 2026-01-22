@@ -15,11 +15,11 @@ namespace E2EShoppingAutomation.Pages
         public CartPage(IPage page) : base(page) { }
 
         /// <summary>
-        /// Requirement 4.3: Asserts that the cart total does not exceed the budget threshold
+        /// Asserts that the cart total does not exceed the budget threshold
         /// </summary>
         public async Task AssertCartTotalNotExceeds(decimal budgetPerItem, int itemsCount)
         {
-            // Fix: Using Force=true to click even if the green notification bar covers the link
+            // Using Force=true to click even if the green notification bar covers the link
             await ShoppingCartLink.First.ClickAsync(new() { Force = true });
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 

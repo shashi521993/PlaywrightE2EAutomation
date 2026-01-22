@@ -33,7 +33,7 @@ namespace E2EShoppingAutomation.Tests
         [Description("Full E2E Scenario: Login -> Search -> Add to Cart -> Budget Validation")]
         public async Task FullShoppingFlow_E2E()
         {
-            // 45% Architecture: POM Initialization
+            //POM Initialization
             var loginPage = new LoginPage(Page);
             var searchPage = new SearchPage(Page);
             var productPage = new ProductPage(Page);
@@ -45,9 +45,10 @@ namespace E2EShoppingAutomation.Tests
             TestContext.WriteLine("Step 1: Performing Login");
             await loginPage.LoginAsync(_creds["email"].ToString(), _creds["password"].ToString());
 
+            // Clear cart
             await cartPage.ClearCartAsync();
 
-            // Step 2: Requirement 4.1 - Search with Price Filtering & Paging
+            // Step 2: Search with Price Filtering & Paging
             string query = _config["searchQuery"].ToString();
             decimal maxPrice = _config["maxPrice"].Value<decimal>();
             int limit = _config["itemsLimit"].Value<int>();
@@ -57,14 +58,14 @@ namespace E2EShoppingAutomation.Tests
 
             TestContext.WriteLine($"Found {productUrls.Count} items matching criteria.");
 
-            // Step 3: Requirement 4.2 - Add all found items to cart
+            // Step 3: Add all found items to cart
             if (productUrls.Count > 0)
             {
                 TestContext.WriteLine("Step 3: Adding items to cart and handling variants");
                 await productPage.AddItemsToCart(productUrls);
             }
 
-            // Step 4: Requirement 4.3 - Budget Validation
+            // Step 4: Budget Validation
             decimal budgetPerItem = _config["budgetPerItem"].Value<decimal>();
             TestContext.WriteLine($"Step 4: Validating total cart budget (Limit per item: {budgetPerItem})");
 

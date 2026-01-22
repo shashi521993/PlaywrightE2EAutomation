@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace E2EShoppingAutomation.Tests
 {
     [TestFixture]
-    public class ProductTests : PageTest // Inheriting from PageTest is crucial
+    public class ProductTests : PageTest
     {
         private SearchPage _searchPage;
         private ProductPage _productPage;

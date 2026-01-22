@@ -5,7 +5,6 @@ namespace E2EShoppingAutomation.Pages
     public abstract class BasePage
     {
         protected readonly IPage Page;
-
         protected BasePage(IPage page) => Page = page;
 
         public async Task ClickWhenVisible(string selector)
@@ -33,10 +32,8 @@ namespace E2EShoppingAutomation.Pages
             TestContext.WriteLine($"Screenshot saved: {filePath}");
         }
 
-
         public async Task WaitForNetworkIdle() =>
             await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
 
         public async Task WaitForPageLoad() => await WaitForNetworkIdle();
     }
