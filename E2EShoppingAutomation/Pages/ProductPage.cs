@@ -9,7 +9,6 @@ namespace E2EShoppingAutomation.Pages
     {
         // Generic selector: Taking the first visible "Add to cart" button on the page
         private ILocator AddToCartButton => Page.GetByRole(AriaRole.Button, new() { Name = "Add to cart" }).First;
-
         private ILocator SuccessNotification => Page.Locator(".bar-notification.success");
 
         // Generic selector for any mandatory attributes (Dropdowns, Radio buttons, Checkboxes)

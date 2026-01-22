@@ -2,6 +2,8 @@
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 using E2EShoppingAutomation.Pages;
+using Newtonsoft.Json.Linq;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace E2EShoppingAutomation.Tests
@@ -9,27 +11,41 @@ namespace E2EShoppingAutomation.Tests
     [TestFixture]
     public class CartTests : PageTest
     {
+        private JObject _config;
+
+        [SetUp]
+        public async Task Setup()
+        {
+            string configPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Config", "appsettings.json");
+            _config = JObject.Parse(await File.ReadAllTextAsync(configPath));
+        }
+
         [Test]
-        [Description("Requirement 4.3: Verify the total cart amount does not exceed the calculated budget")]
+        [Description("Requirement 4.3: Verify cart total against budget threshold using config data")]
         public async Task AssertCartTotalNotExceeds_ShouldPass()
         {
-            // Arrange
-            // We must add an item to the cart first to test the cart logic
-            string specificProductUrl = "https://demowebshop.tricentis.com";
-            decimal expectedPricePerItem = 10.00M; // This item costs exactly 10.00
-            int quantity = 1;
+            // 1. Arrange - Load Data from Config
+            string baseUrl = _config["baseUrl"]?.ToString() ?? "https://demowebshop.tricentis.com";
+            decimal budgetPerItem = _config["budgetPerItem"]?.Value<decimal>() ?? 1000m;
+            string query = _config["searchQuery"]?.ToString() ?? "Computing";
 
+            var searchPage = new SearchPage(Page);
             var productPage = new ProductPage(Page);
-
-            // Navigate and add a known item to the cart
-            await Page.GotoAsync(specificProductUrl);
-            await Page.Locator("input[id^='add-to-cart-button']").ClickAsync();
-            await Page.WaitForSelectorAsync("#bar-notification", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
-
-            // Act & Assert (using the CartPage logic)
             var cartPage = new CartPage(Page);
-            // This method contains the assertion logic and the screenshot capture
-            await cartPage.AssertCartTotalNotExceeds(expectedPricePerItem, quantity);
+
+            // 2. Act - Create a state where the cart has items
+            await Page.GotoAsync(baseUrl);
+
+            // Get at least 1 product that fits the budget
+            var results = await searchPage.SearchItemsByNameUnderPrice(query, budgetPerItem, 1);
+            Assert.That(results.Count, Is.GreaterThan(0), "No products found to test cart total.");
+
+            // Add the found product to cart using our smart ProductPage
+            await productPage.AddItemsToCart(results);
+
+            // 3. Assert - Use the required method (4.3)
+            // It will navigate to cart, calculate the threshold, and verify the total
+            await cartPage.AssertCartTotalNotExceeds(budgetPerItem, results.Count);
         }
     }
 }

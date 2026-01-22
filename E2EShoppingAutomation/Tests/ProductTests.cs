@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using E2EShoppingAutomation.Pages;
 using System.IO;
 using System.Threading.Tasks;
-//using static Microsoft.Playwright.Assertions; // Added for the Expect() call
 
 namespace E2EShoppingAutomation.Tests
 {
@@ -42,7 +41,7 @@ namespace E2EShoppingAutomation.Tests
         public async Task AddMultipleItemsToCart_ShouldSucceed()
         {
             // 1. Get search results (URLs)
-            string query = _configData["searchQuery"]?.ToString() ?? "Computing";
+            string query = _configData["searchQuery"]?.ToString() ?? "Computer";
             decimal maxPrice = _configData["maxPrice"]?.Value<decimal>() ?? 1200m;
             int limit = _configData["itemsLimit"]?.Value<int>() ?? 3;
 

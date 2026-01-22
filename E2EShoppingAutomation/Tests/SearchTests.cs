@@ -48,11 +48,9 @@ namespace E2EShoppingAutomation.Tests
             var results = await _searchPage.SearchItemsByNameUnderPrice(query, maxPrice, limit);
 
             // Assert
-            // שינוי קריטי: אנחנו לא בודקים אם זה גדול מ-0, אלא רק שזה לא חורג מהלימיט
             Assert.That(results.Count, Is.LessThanOrEqualTo(limit),
                 $"Expected up to {limit} results, but found {results.Count}.");
 
-            // תיעוד התוצאה בלוג (גם אם נמצאו 0)
             if (results.Count == 0)
             {
                 TestContext.WriteLine($"Search completed successfully: No products found for '{query}' under {maxPrice}. (Valid Result)");

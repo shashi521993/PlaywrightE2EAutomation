@@ -35,9 +35,7 @@
 
 	<ItemGroup>
 		<Folder Include="Screenshots\" />
-		<Folder Include="TestData\" />
-		<Folder Include="Utils\" />
-		<Folder Include="Reports\" />
+		<Folder Include="TestReports\" />
 		<Folder Include="Pages\" />
 	</ItemGroup>
 

@@ -34,13 +34,11 @@ namespace E2EShoppingAutomation.Pages
 
                 foreach (var item in productItems)
                 {
-                    // בדיקה קריטית: האם כבר הגענו למקסימום שביקשת?
                     if (resultUrls.Count >= limit) break;
 
                     var priceText = await item.Locator(PriceSelector).InnerTextAsync();
                     decimal price = ParsePrice(priceText);
 
-                    // סינון מחיר קשיח: רק אם המחיר נמוך או שווה למה שהגדרת
                     if (price > 0 && price <= maxPrice)
                     {
                         var url = await item.Locator(TitleLinkSelector).GetAttributeAsync("href");
@@ -52,7 +50,6 @@ namespace E2EShoppingAutomation.Pages
                     }
                 }
 
-                // דפדוף לעמוד הבא רק אם עדיין חסרים מוצרים
                 if (resultUrls.Count < limit && await NextPageButton.IsVisibleAsync())
                 {
                     await NextPageButton.ClickAsync();

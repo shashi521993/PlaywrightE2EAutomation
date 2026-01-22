@@ -3,18 +3,16 @@
   <RunConfiguration>
     <MaxCpuCount>1</MaxCpuCount>
     <EnvironmentVariables>
-      <!-- ניתן להוסיף כאן HEADED=1 כדרך נוספת -->
       <HEADED>1</HEADED>
     </EnvironmentVariables>
   </RunConfiguration>
 
-  <!-- הוסף את החלק הזה כדי לראות את הדפדפן -->
   <Playwright>
     <BrowserName>chromium</BrowserName> <!-- או firefox / webkit -->
     <LaunchOptions>
-      <Headless>false</Headless> <!-- זה מה שגורם לדפדפן להיפתח -->
-      <SlowMo>500</SlowMo> <!-- אופציונלי: מאט את הפעולות ב-500ms כדי שתוכל לעקוב -->
-    </LaunchOptions>
+      <Headless>false</Headless>
+      <SlowMo>500</SlowMo>
+	</LaunchOptions>
   </Playwright>
 </RunSettings>
 

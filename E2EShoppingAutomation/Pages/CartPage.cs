@@ -1,48 +1,66 @@
 ﻿using Microsoft.Playwright;
+using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace E2EShoppingAutomation.Pages
 {
     public class CartPage : BasePage
     {
+        // This targets the actual number value in the cart summary
+        private ILocator CartTotalValue => Page.Locator(".order-summary-content .product-price").Last;
+        private ILocator ShoppingCartLink => Page.GetByRole(AriaRole.Link, new() { Name = "Shopping cart" });
+
         public CartPage(IPage page) : base(page) { }
 
-        // Selectors for DemoWebShop
-        private ILocator TotalPriceLabel => Page.Locator(".order-total strong");
-        private ILocator ShoppingCartLink => Page.Locator(".header-links .ico-cart");
-
         /// <summary>
-        /// Navigates to the cart, calculates total budget vs actual price, and asserts result.
-        /// (Requirement 4.3)
+        /// Requirement 4.3: Asserts that the cart total does not exceed the budget threshold
         /// </summary>
         public async Task AssertCartTotalNotExceeds(decimal budgetPerItem, int itemsCount)
         {
-            // 1. Open the cart
-            await ShoppingCartLink.ClickAsync();
-            await WaitForNetworkIdle();
+            // Fix: Using Force=true to click even if the green notification bar covers the link
+            await ShoppingCartLink.First.ClickAsync(new() { Force = true });
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            // 2. Extract and parse the actual total price from the UI
-            var totalText = await TotalPriceLabel.InnerTextAsync();
+            // Check if cart is empty
+            if (itemsCount == 0)
+            {
+                TestContext.WriteLine("Cart is empty as expected. Budget check skipped.");
+                await TakeScreenshot("Empty_Cart_Validation");
+                return;
+            }
+
+            string totalText = await CartTotalValue.InnerTextAsync();
             decimal actualTotal = ParsePrice(totalText);
+            decimal threshold = budgetPerItem * itemsCount;
 
-            // 3. Calculate the threshold based on the data-driven inputs
-            decimal maxAllowedBudget = budgetPerItem * itemsCount;
+            await TakeScreenshot("Cart_Budget_Validation");
 
-            // 4. Requirement 4.3: Take screenshot of the cart page
-            await TakeScreenshot("Final_Cart_Summary");
+            TestContext.WriteLine($"Budget Check: Total {actualTotal} vs Threshold {threshold}");
 
-            // 5. Assertion
-            Assert.That(actualTotal, Is.LessThanOrEqualTo(maxAllowedBudget),
-                $"Budget exceeded! Cart Total: {actualTotal}, Max Allowed: {maxAllowedBudget}");
+            Assert.That(actualTotal, Is.LessThanOrEqualTo(threshold), "Budget exceeded!");
+        }
 
-            Console.WriteLine($"Assertion Success: Total {actualTotal} is within budget of {maxAllowedBudget}");
+        public async Task ClearCartAsync()
+        {
+            await ShoppingCartLink.First.ClickAsync(new() { Force = true });
+            var updateCartButton = Page.GetByRole(AriaRole.Button, new() { Name = "Update shopping cart" });
+
+            if (await updateCartButton.IsVisibleAsync())
+            {
+                var removeCheckboxes = await Page.Locator("input[name='removefromcart']").AllAsync();
+                foreach (var checkbox in removeCheckboxes)
+                {
+                    await checkbox.CheckAsync();
+                }
+                await updateCartButton.ClickAsync();
+            }
         }
 
         private decimal ParsePrice(string priceText)
         {
-            // Removes currency symbols and commas using Regex
-            var cleanPrice = Regex.Replace(priceText, @"[^\d\.]", "");
+            var cleanPrice = Regex.Replace(priceText, @"[^0-9\.]", "");
             return decimal.TryParse(cleanPrice, out decimal result) ? result : 0;
         }
     }
