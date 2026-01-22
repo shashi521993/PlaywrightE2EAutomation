@@ -1,11 +1,11 @@
 ﻿E2E Shopping Automation Framework - Playwright .NET
 
 
-Overview
+Overview:
 	This repository contains a professional automation framework designed to validate a complete shopping journey on an e-commerce platform (DemoWebShop). The framework is built using Playwright .NET (2026), C#, and NUnit, demonstrating advanced techniques for handling dynamic web elements and data-driven scenarios.
 
 
-Architecture
+Architecture:
 	The framework is designed using the Page Object Model (POM) pattern to ensure a clean separation between UI interactions and test logic.
 
 	BasePage: A centralized class providing shared utilities for synchronized clicks, screenshot capturing, and custom logging.
@@ -15,7 +15,7 @@ Architecture
 	Robustness: Elements are located using Playwright's modern locators (AriaRole, GetByText) combined with auto-waiting mechanisms to handle asynchronous UI updates.
 
 
-The End-to-End Scenario (Core Focus)
+The End-to-End Scenario (Core Focus):
 	The primary deliverable of this framework is the Full E2E Scenario, which simulates a realistic user journey:
 
 	Authentication: Secure login using externalized credentials.
@@ -29,7 +29,7 @@ The End-to-End Scenario (Core Focus)
 	Validation: Final verification of the total cart amount against a defined budget threshold (Requirement 4.3).
 
 
-Project Structure
+Project Structure:
 
 	Pages: Page Object classes representing the UI components.
 
@@ -40,7 +40,7 @@ Project Structure
 	Config: JSON files for environment and data management.
 
 
-Execution and Reporting
+Execution and Reporting:
 
 	Prerequisites
 		.NET 8.0 SDK
@@ -59,7 +59,7 @@ Execution and Reporting
 		Screenshots: Automatically captured during the "Add to Cart" and budget validation steps, stored in the /Screenshots folder at the project root.
 
 
-Assumptions & Limitations
+Assumptions & Limitations:
 
 	Platform: DemoWebShop was utilized as the target platform to demonstrate complex attribute handling and paging.
 
