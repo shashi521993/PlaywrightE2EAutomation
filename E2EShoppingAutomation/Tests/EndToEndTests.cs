@@ -1,14 +1,16 @@
-﻿using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
+﻿using Allure.NUnit;
 using E2EShoppingAutomation.Pages;
+using Microsoft.Playwright;
+using Microsoft.Playwright.NUnit;
 using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace E2EShoppingAutomation.Tests
 {
     [TestFixture]
+    [AllureNUnit]
     public class EndToEndTests : PageTest
     {
         private JObject _config;

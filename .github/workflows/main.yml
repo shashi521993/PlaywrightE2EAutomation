@@ -8,6 +8,11 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   test:
     timeout-minutes: 60
@@ -25,7 +30,6 @@ jobs:
       run: dotnet restore
 
     - name: Build Project
-      # Disabling CS8618 warnings to prevent build failure
       run: dotnet build E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug -p:NoWarn=CS8618
 
     - name: Install Playwright Browsers
@@ -35,11 +39,12 @@ jobs:
     - name: Run Playwright Tests
       if: always()
       run: |
+        # Removed --logger "allure" as the Allure.NUnit adapter handles this internally via code attributes
         dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
           --configuration Debug \
           --no-build \
           --settings E2EShoppingAutomation/playwright.runsettings \
-          --logger "allure"
+          --logger "trx;LogFileName=test-results.trx"
 
     - name: Load Allure History
       uses: actions/checkout@v4
@@ -53,6 +58,8 @@ jobs:
       uses: simple-elf/allure-report-action@master
       if: always()
       with:
+        # If your allure-results are inside the bin folder, update this path to:
+        # E2EShoppingAutomation/bin/Debug/net8.0/allure-results
         allure_results: allure-results
         gh_pages: gh-pages
         allure_report: allure-report
