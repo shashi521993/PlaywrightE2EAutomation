@@ -74,6 +74,51 @@ namespace E2EShoppingAutomation.Tests
             TestContext.WriteLine("E2E Scenario Completed Successfully.");
         }
 
+        [Test]
+        [Description("Full E2E Scenario: Login -> Search -> Add to Cart -> Budget Validation")]
+        public async Task FullShoppingFlow_E2E2()
+        {
+            //POM Initialization
+            var loginPage = new LoginPage(Page);
+            var searchPage = new SearchPage(Page);
+            var productPage = new ProductPage(Page);
+            var cartPage = new CartPage(Page);
+
+            TestContext.WriteLine("Starting E2E Flow...");
+
+            // Step 1: Login
+            TestContext.WriteLine("Step 1: Performing Login");
+            await loginPage.LoginAsync(_creds["email"].ToString(), _creds["password"].ToString());
+
+            // Clear cart
+            await cartPage.ClearCartAsync();
+
+            // Step 2: Search with Price Filtering & Paging
+            string query = _config["searchQuery"].ToString();
+            decimal maxPrice = _config["maxPrice"].Value<decimal>();
+            int limit = _config["itemsLimit"].Value<int>();
+
+            TestContext.WriteLine($"Step 2: Searching for '{query}' under {maxPrice}");
+            var productUrls = await searchPage.SearchItemsByNameUnderPrice(query, maxPrice, limit);
+
+            TestContext.WriteLine($"Found {productUrls.Count} items matching criteria.");
+
+            // Step 3: Add all found items to cart
+            if (productUrls.Count > 0)
+            {
+                TestContext.WriteLine("Step 3: Adding items to cart and handling variants");
+                await productPage.AddItemsToCart(productUrls);
+            }
+
+            // Step 4: Budget Validation
+            decimal budgetPerItem = _config["budgetPerItem"].Value<decimal>();
+            TestContext.WriteLine($"Step 4: Validating total cart budget (Limit per item: {budgetPerItem})");
+
+            await cartPage.AssertCartTotalNotExceeds(budgetPerItem, productUrls.Count);
+
+            TestContext.WriteLine("E2E Scenario Completed Successfully.");
+        }
+
         [TearDown]
         public async Task TearDown()
         {

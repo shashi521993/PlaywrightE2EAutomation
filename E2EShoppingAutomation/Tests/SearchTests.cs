@@ -65,5 +65,36 @@ namespace E2EShoppingAutomation.Tests
 
             await _searchPage.TakeScreenshot("Search_Execution_Finished");
         }
+
+        [Test]
+        [Description("Requirement 4.1: Search products and return up to limit results, 0 is a valid result")]
+        public async Task SearchItemsUnderPrice_ShouldReturnFilteredResults2()
+        {
+            // Arrange
+            string query = _configData["searchQuery"]?.ToString() ?? "shoes";
+            decimal maxPrice = _configData["maxPrice"]?.Value<decimal>() ?? 20m;
+            int limit = _configData["itemsLimit"]?.Value<int>() ?? 5;
+
+            // Act
+            var results = await _searchPage.SearchItemsByNameUnderPrice(query, maxPrice, limit);
+
+            // Assert
+            Assert.That(results.Count, Is.LessThanOrEqualTo(limit),
+                $"Expected up to {limit} results, but found {results.Count}.");
+
+            if (results.Count == 0)
+            {
+                TestContext.WriteLine($"Search completed successfully: No products found for '{query}' under {maxPrice}. (Valid Result)");
+            }
+            else
+            {
+                foreach (var url in results)
+                {
+                    TestContext.WriteLine($"Product found within budget: {url}");
+                }
+            }
+
+            await _searchPage.TakeScreenshot("Search_Execution_Finished");
+        }
     }
 }

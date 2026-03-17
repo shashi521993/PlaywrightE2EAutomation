@@ -48,5 +48,22 @@ namespace E2EShoppingAutomation.Tests
 
             await loginPage.TakeScreenshot("Login_Success");
         }
+
+        [Test]
+        public async Task Login_ShouldWorkSuccessfully2()
+        {
+            await Page.GotoAsync(_baseUrl);
+
+            var loginPage = new LoginPage(Page);
+            await loginPage.LoginAsync(_email, _password);
+
+            // Verified indicator for successful login on DemoWebShop
+            await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Log out" })).ToBeVisibleAsync(new()
+            {
+                Timeout = 10000
+            });
+
+            await loginPage.TakeScreenshot("Login_Success");
+        }
     }
 }
