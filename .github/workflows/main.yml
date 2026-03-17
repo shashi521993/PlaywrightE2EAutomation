@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Playwright E2E Automation
 on:
   push:
     branches: [ main, master ]
@@ -13,33 +13,87 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    - name: Install dependencies
+    - name: Install Dependencies
       run: dotnet restore
 
-    - name: Build project
-      # We build in Debug here so the script is exactly where the next step expects it
+    - name: Build Project
+      # Disabling CS8618 warnings to prevent build failure
       run: dotnet build E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug -p:NoWarn=CS8618
 
     - name: Install Playwright Browsers
-      # Using the absolute pathing based on your repository structure
       run: |
         pwsh ./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1 install --with-deps
 
-    - name: Run Playwright tests
+    - name: Run Playwright Tests
+      if: always()
       run: |
-        dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug --no-build --settings E2EShoppingAutomation/playwright.runsettings
+        dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
+          --configuration Debug \
+          --no-build \
+          --settings E2EShoppingAutomation/playwright.runsettings \
+          --logger "allure"
 
-    - name: Upload Test Results
+    - name: Load Allure History
+      uses: actions/checkout@v4
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages
+        path: gh-pages
+
+    - name: Generate Allure Report
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results
+        gh_pages: gh-pages
+        allure_report: allure-report
+        allure_history: allure-history
+
+    - name: Deploy Allure to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-report
+
+    - name: Upload Screenshots Artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: playwright-screenshots
+        name: test-execution-screenshots
         path: E2EShoppingAutomation/Screenshots/
-        retention-days: 30
+        retention-days: 7
+
+    - name: Send Email Notification
+      if: always()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "Playwright Automation Result: ${{ job.status }}"
+        to: kshashi996@gmail.com
+        from: GitHub Automation Agent
+        body: |
+          Hello,
+
+          The Playwright E2E Test execution is complete.
+
+          Result: ${{ job.status }}
+          Project: ${{ github.repository }}
+          
+          View Detailed Allure Report: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          View Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Regards,
+          CI/CD Bot
