@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     timeout-minutes: 60
@@ -21,20 +24,22 @@ jobs:
       run: dotnet restore
 
     - name: Build project
-      run: dotnet build --configuration Release --no-restore
+      # We build in Debug here so the script is exactly where the next step expects it
+      run: dotnet build --configuration Debug -p:NoWarn=CS8618
 
     - name: Install Playwright Browsers
+      # Using the absolute pathing based on your repository structure
       run: |
-        dotnet build
-        pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
+        pwsh ./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1 install --with-deps
 
     - name: Run Playwright tests
-      run: dotnet test --configuration Release --no-build --settings:playwright.runsettings
+      run: |
+        dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug --no-build --settings E2EShoppingAutomation/playwright.runsettings
 
     - name: Upload Test Results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: playwright-screenshots
-        path: Screenshots/
+        path: E2EShoppingAutomation/Screenshots/
         retention-days: 30
