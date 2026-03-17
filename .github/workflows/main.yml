@@ -44,17 +44,25 @@ jobs:
       if: always()
       run: |
         set -e
-        # install a local tool to convert TRX to HTML
-        dotnet tool install --tool-path ./tools trx2html --version 1.1.0 || true
-        # find the generated TRX file
-        TRX_PATH=$(ls **/test-results.trx 2>/dev/null | head -n1 || true)
+        # Install ReportGenerator (stable dotnet global tool) to convert TRX to HTML
+        dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool || true
+        # locate the generated TRX file (search recursively)
+        TRX_PATH=$(find . -type f -name 'test-results.trx' -print -quit || true)
         if [ -z "$TRX_PATH" ]; then
           echo "No TRX file found, skipping HTML report generation."
         else
           mkdir -p E2EShoppingAutomation/Reports
-          ./tools/trx2html -i "$TRX_PATH" -o E2EShoppingAutomation/Reports/test-report.html
-          echo "HTML report generated at E2EShoppingAutomation/Reports/test-report.html"
+          ./tools/reportgenerator -reports:"$TRX_PATH" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:HtmlSummary
+          echo "HTML report generated at E2EShoppingAutomation/Reports/index.html"
         fi
+
+    - name: Upload HTML Report Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-report
+        path: E2EShoppingAutomation/Reports/
+        retention-days: 7
 
     - name: Upload Screenshots Artifacts
       if: always()
