@@ -11,8 +11,8 @@ namespace E2EShoppingAutomation.Tests
     [TestFixture]
     public class EndToEndTests : PageTest
     {
-        private JObject _config= null!;
-        private JObject _creds=null!;
+        private JObject _config;
+        private JObject _creds;
 
         [SetUp]
         public async Task Setup()
