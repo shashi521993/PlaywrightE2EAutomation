@@ -1,5 +1,6 @@
 {
   "allure": {
-    "directory": "allure-results"
+    "directory": "allure-results",
+    "links": [ "https://github.com/shashi521993/PlaywrightE2EAutomation/issues/{issue}" ]
   }
 }
