@@ -52,8 +52,8 @@ jobs:
           echo "No TRX file found, skipping HTML report generation."
         else
           mkdir -p E2EShoppingAutomation/Reports
-          ./tools/reportgenerator -reports:"$TRX_PATH" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:HtmlSummary
-          echo "HTML report generated at E2EShoppingAutomation/Reports/index.html"
+          ./tools/reportgenerator -reports:"$TRX_PATH" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:Html;HtmlSummary -reporttitle:"Playwright E2E Test Report"
+          echo "HTML report generated at E2EShoppingAutomation/Reports/index.html (contains summary with passed/failed/total)"
         fi
 
     - name: Upload HTML Report Artifact
