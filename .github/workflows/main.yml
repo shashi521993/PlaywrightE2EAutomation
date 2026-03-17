@@ -25,7 +25,7 @@ jobs:
 
     - name: Build project
       # We build in Debug here so the script is exactly where the next step expects it
-      run: dotnet build --configuration Debug -p:NoWarn=CS8618
+      run: dotnet build E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug -p:NoWarn=CS8618
 
     - name: Install Playwright Browsers
       # Using the absolute pathing based on your repository structure
