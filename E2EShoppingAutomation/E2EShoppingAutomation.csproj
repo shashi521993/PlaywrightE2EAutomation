@@ -9,14 +9,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="Config\appSettings.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<Content Include="Config\appsettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Config\credentials.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Include="playwright.runsettings">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 
