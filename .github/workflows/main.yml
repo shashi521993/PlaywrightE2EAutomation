@@ -24,7 +24,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: '8.0.x'
 
     - name: Install Dependencies
       run: dotnet restore
@@ -39,7 +39,6 @@ jobs:
     - name: Run Playwright Tests
       if: always()
       run: |
-        # Removed --logger "allure" as the Allure.NUnit adapter handles this internally via code attributes
         dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
           --configuration Debug \
           --no-build \
@@ -58,8 +57,6 @@ jobs:
       uses: simple-elf/allure-report-action@master
       if: always()
       with:
-        # If your allure-results are inside the bin folder, update this path to:
-        # E2EShoppingAutomation/bin/Debug/net8.0/allure-results
         allure_results: allure-results
         gh_pages: gh-pages
         allure_report: allure-report
@@ -79,28 +76,3 @@ jobs:
         name: test-execution-screenshots
         path: E2EShoppingAutomation/Screenshots/
         retention-days: 7
-
-    - name: Send Email Notification
-      if: always()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "Playwright Automation Result: ${{ job.status }}"
-        to: kshashi996@gmail.com
-        from: GitHub Automation Agent
-        body: |
-          Hello,
-
-          The Playwright E2E Test execution is complete.
-
-          Result: ${{ job.status }}
-          Project: ${{ github.repository }}
-          
-          View Detailed Allure Report: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-          View Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-          Regards,
-          CI/CD Bot

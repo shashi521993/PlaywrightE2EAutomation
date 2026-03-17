@@ -11,6 +11,7 @@ namespace E2EShoppingAutomation.Tests
 {
     [TestFixture]
     [AllureNUnit]
+    [Ignore("one test run only")]
     public class CartTests : PageTest
     {
         private JObject _config;
