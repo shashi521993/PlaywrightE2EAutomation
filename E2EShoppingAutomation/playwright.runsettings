@@ -7,7 +7,7 @@
   <Playwright>
     <BrowserName>chromium</BrowserName> <!-- firefox / webkit -->
     <LaunchOptions>
-      <Headless>false</Headless>
+      <Headless>true</Headless>
       <SlowMo>500</SlowMo>
 	</LaunchOptions>
   </Playwright>
