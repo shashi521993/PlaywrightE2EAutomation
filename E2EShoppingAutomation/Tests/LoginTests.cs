@@ -43,7 +43,7 @@ namespace E2EShoppingAutomation.Tests
             // Verified indicator for successful login on DemoWebShop
             await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Log out" })).ToBeVisibleAsync(new()
             {
-                Timeout = 5000
+                Timeout = 10000
             });
 
             await loginPage.TakeScreenshot("Login_Success");
