@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
 	<NUnit>
-		<NumberOfTestWorkers>2</NumberOfTestWorkers>
+		<NumberOfTestWorkers>1</NumberOfTestWorkers>
 	</NUnit>
 
   <Playwright>
     <BrowserName>chromium</BrowserName> <!-- firefox / webkit -->
     <LaunchOptions>
-      <Headless>false</Headless>
+      <Headless>true</Headless>
       <SlowMo>500</SlowMo>
 	</LaunchOptions>
   </Playwright>
