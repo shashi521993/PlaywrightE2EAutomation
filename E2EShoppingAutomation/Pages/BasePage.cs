@@ -1,6 +1,4 @@
 ﻿using Microsoft.Playwright;
-[assembly: Parallelizable(ParallelScope.Fixtures)]
-//[assembly:LevelOfParallelism(2)]
 
 namespace E2EShoppingAutomation.Pages
 {
