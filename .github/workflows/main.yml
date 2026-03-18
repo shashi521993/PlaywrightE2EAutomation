@@ -1,81 +1,22 @@
-name: Playwright E2E Automation
+name: Playwright Tests
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - uses: actions/checkout@v5
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '8.0.x'
-
-    - name: Install Dependencies
-      run: dotnet restore
-
-    - name: Build Project
-      run: dotnet build E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug -p:NoWarn=CS8618
-
-    - name: Install Playwright Browsers
-      run: |
-        pwsh ./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1 install --with-deps
-
-    - name: Run Playwright Tests
-      if: always()
-      run: |
-        dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
-          --configuration Debug \
-          --no-build \
-          --settings E2EShoppingAutomation/playwright.runsettings \
-          --logger "trx;LogFileName=test-results.trx"
-
-    - name: Generate HTML Test Report (trx -> html)
-      if: always()
-      run: |
-        set -e
-        # Install ReportGenerator (stable dotnet global tool) to convert TRX to HTML
-        dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool || true
-        # locate the generated TRX file (search recursively)
-        TRX_PATH=$(find . -type f -name 'test-results.trx' -print -quit || true)
-        if [ -z "$TRX_PATH" ]; then
-          echo "No TRX file found, skipping HTML report generation."
-        else
-          mkdir -p E2EShoppingAutomation/Reports
-          # Quote the report types so the shell does not treat the semicolon as a command separator
-          ./tools/reportgenerator -reports:"$TRX_PATH" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -reporttitle:"Playwright E2E Test Report"
-          echo "HTML report generated at E2EShoppingAutomation/Reports/index.html (contains summary with passed/failed/total)"
-        fi
-
-    - name: Upload HTML Report Artifact
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: html-report
-        path: E2EShoppingAutomation/Reports/
-        retention-days: 7
-
-    - name: Upload Screenshots Artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-execution-screenshots
-        path: E2EShoppingAutomation/Screenshots/
-        retention-days: 7
-
-    - name: Upload Test Results (TRX)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: "**/test-results.trx"
+        dotnet-version: 8.0.x
+    - name: Build & Install
+      run: dotnet build
+    - name: Ensure browsers are installed
+      run: pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
+    - name: Run your tests
+      run: dotnet test
