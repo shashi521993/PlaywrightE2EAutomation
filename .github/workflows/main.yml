@@ -1,28 +1,86 @@
-name: Playwright Tests
+name: Playwright E2E Automation
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    - name: Setup dotnet
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 8.0.x
-    - name: Build & Install
-      run: dotnet build
-    - name: Ensure browsers are installed
-      run: pwsh ./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1 install --with-deps
-    - name: Run your tests
-      run: dotnet test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore E2EShoppingAutomation/E2EShoppingAutomation.csproj
+
+    - name: Build project
+      run: dotnet build E2EShoppingAutomation/E2EShoppingAutomation.csproj --configuration Debug -p:NoWarn=CS8618
+
+    - name: Ensure Playwright browsers are installed
+      run: |
+        set -euo pipefail
+        SCRIPT=./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1
+        if [ -f "$SCRIPT" ]; then
+          echo "Found Playwright script at $SCRIPT"
+          pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT" install --with-deps
+        else
+          echo "$SCRIPT not found, falling back to npx if available"
+          if command -v npx >/dev/null 2>&1; then
+            npx playwright install --with-deps
+          else
+            echo "No Playwright installer found (script or npx). Ensure Playwright is available." >&2
+            exit 1
+          fi
+        fi
+
+    - name: Run tests and produce TRX
+      run: |
+        mkdir -p E2EShoppingAutomation/TestResults
+        dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
+          --configuration Debug \
+          --no-build \
+          --settings E2EShoppingAutomation/playwright.runsettings \
+          --logger "trx;LogFileName=E2EShoppingAutomation/TestResults/test-results.trx"
+
+    - name: Install ReportGenerator tool
+      run: dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool || true
+
+    - name: Generate HTML Test Report
+      run: |
+        set -euo pipefail
+        REPORTS_GLOB="E2EShoppingAutomation/TestResults/*.trx"
+        mkdir -p E2EShoppingAutomation/Reports
+        mkdir -p E2EShoppingAutomation/Reports/history
+        ./tools/reportgenerator -reports:"$REPORTS_GLOB" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history || true
+
+    - name: Upload HTML report artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+        name: html-report
+        path: E2EShoppingAutomation/Reports/
+        if-no-files-found: warn
+        retention-days: 7
+
+    - name: Upload Test Results (TRX)
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: E2EShoppingAutomation/TestResults/
+        if-no-files-found: warn
+        retention-days: 7
+
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots
+        path: E2EShoppingAutomation/Screenshots/
+        if-no-files-found: warn
+        retention-days: 7
