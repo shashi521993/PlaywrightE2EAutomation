@@ -56,10 +56,25 @@ jobs:
     - name: Generate HTML Test Report
       run: |
         set -euo pipefail
-        REPORTS_GLOB="E2EShoppingAutomation/TestResults/*.trx"
+        echo "-- Debug: locate TRX files in workspace --"
+        TRX_LIST=$(find . -type f -name '*.trx' -print | tr '\n' ';' | sed 's/;$//')
+
+        if [ -z "$TRX_LIST" ]; then
+          echo "No TRX files found in workspace. Skipping HTML report generation."
+          exit 0
+        fi
+
+        echo "Found TRX files: $TRX_LIST"
         mkdir -p E2EShoppingAutomation/Reports
         mkdir -p E2EShoppingAutomation/Reports/history
-        ./tools/reportgenerator -reports:"$REPORTS_GLOB" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history || true
+
+        if [ -x ./tools/reportgenerator ]; then
+          echo "Using ./tools/reportgenerator"
+          ./tools/reportgenerator -reports:"$TRX_LIST" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history
+        else
+          echo "./tools/reportgenerator not found or not executable. Trying 'dotnet tool run reportgenerator'"
+          dotnet tool run reportgenerator -- -reports:"$TRX_LIST" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history
+        fi
 
     - name: Upload HTML report artifact
       uses: actions/upload-artifact@v4
