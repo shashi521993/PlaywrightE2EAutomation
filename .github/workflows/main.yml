@@ -53,6 +53,37 @@ jobs:
     - name: Install ReportGenerator tool
       run: dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool || true
 
+    - name: Generate Allure HTML Report (preferred)
+      run: |
+        set -euo pipefail
+        # Find an allure-results directory produced by Allure.NUnit
+        ALLURE_DIR=$(find . -type d -name 'allure-results' -print -quit || true)
+        if [ -z "$ALLURE_DIR" ]; then
+          echo "No allure-results directory found. Skipping Allure report generation."
+          exit 0
+        fi
+
+        echo "Found Allure results at: $ALLURE_DIR"
+
+        # Install Allure commandline via npm (works on ubuntu runners)
+        if ! command -v allure >/dev/null 2>&1; then
+          echo "Installing allure-commandline via npm"
+          npm install -g allure-commandline --no-audit --no-fund --silent || true
+        fi
+
+        mkdir -p E2EShoppingAutomation/AllureReport
+        # Generate the Allure HTML report
+        allure generate "$ALLURE_DIR" -o E2EShoppingAutomation/AllureReport --clean
+        echo "Allure report generated at E2EShoppingAutomation/AllureReport/index.html"
+
+    - name: Upload Allure Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: E2EShoppingAutomation/AllureReport/
+        if-no-files-found: warn
+        retention-days: 7
+
     - name: Generate HTML Test Report
       run: |
         set -euo pipefail
