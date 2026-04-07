@@ -43,7 +43,14 @@ jobs:
 
     - name: Run tests and produce TRX
       run: |
+        set -euo pipefail
+        # Ensure expected allure-results folder under the project build output exists
         mkdir -p E2EShoppingAutomation/TestResults
+        mkdir -p E2EShoppingAutomation/bin/Debug/net8.0/allure-results
+
+        # Export ALLURE_RESULTS_DIRECTORY so Allure.NUnit writes results to the build output folder
+        export ALLURE_RESULTS_DIRECTORY=E2EShoppingAutomation/bin/Debug/net8.0/allure-results
+
         dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
           --configuration Debug \
           --no-build \
@@ -56,8 +63,14 @@ jobs:
     - name: Generate Allure HTML Report (preferred)
       run: |
         set -euo pipefail
-        # Find an allure-results directory produced by Allure.NUnit
-        ALLURE_DIR=$(find . -type d -name 'allure-results' -print -quit || true)
+        # Prefer the build output allure-results path (matches local dev)
+        PREFERRED="E2EShoppingAutomation/bin/Debug/net8.0/allure-results"
+        if [ -d "$PREFERRED" ]; then
+          ALLURE_DIR="$PREFERRED"
+        else
+          # Fallback: find any allure-results in the workspace
+          ALLURE_DIR=$(find . -type d -name 'allure-results' -print -quit || true)
+        fi
         if [ -z "$ALLURE_DIR" ]; then
           echo "No allure-results directory found. Skipping Allure report generation."
           exit 0
