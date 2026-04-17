@@ -1,0 +1,2 @@
+Screenshot saved: /home/runner/work/PlaywrightE2EAutomation/PlaywrightE2EAutomation/E2EShoppingAutomation/Screenshots/Login_Attempt_102548.png
+Screenshot saved: /home/runner/work/PlaywrightE2EAutomation/PlaywrightE2EAutomation/E2EShoppingAutomation/Screenshots/Login_Success_102548.png
