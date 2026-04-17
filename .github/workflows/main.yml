@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: write  # Required for peaceiris/actions-gh-pages
+
 jobs:
   test:
     timeout-minutes: 60
@@ -26,120 +29,45 @@ jobs:
 
     - name: Ensure Playwright browsers are installed
       run: |
-        set -euo pipefail
-        SCRIPT=./E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1
-        if [ -f "$SCRIPT" ]; then
-          echo "Found Playwright script at $SCRIPT"
-          pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT" install --with-deps
-        else
-          echo "$SCRIPT not found, falling back to npx if available"
-          if command -v npx >/dev/null 2>&1; then
-            npx playwright install --with-deps
-          else
-            echo "No Playwright installer found (script or npx). Ensure Playwright is available." >&2
-            exit 1
-          fi
-        fi
+        pwsh E2EShoppingAutomation/bin/Debug/net8.0/playwright.ps1 install --with-deps
 
-    - name: Run tests and produce TRX
+    - name: Run tests
+      env:
+        ALLURE_RESULTS_DIRECTORY: allure-results
       run: |
-        set -euo pipefail
-        # Ensure expected allure-results folder under the project build output exists
-        mkdir -p E2EShoppingAutomation/TestResults
-        mkdir -p E2EShoppingAutomation/bin/Debug/net8.0/allure-results
-
-        # Export ALLURE_RESULTS_DIRECTORY so Allure.NUnit writes results to the build output folder
-        export ALLURE_RESULTS_DIRECTORY=E2EShoppingAutomation/bin/Debug/net8.0/allure-results
-
         dotnet test E2EShoppingAutomation/E2EShoppingAutomation.csproj \
           --configuration Debug \
           --no-build \
           --settings E2EShoppingAutomation/playwright.runsettings \
-          --logger "trx;LogFileName=E2EShoppingAutomation/TestResults/test-results.trx"
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults
 
-    - name: Install ReportGenerator tool
-      run: dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool || true
-
-    - name: Generate Allure HTML Report (preferred)
+    - name: Generate Allure Report
+      if: always() # Ensures report is generated even if tests fail
       run: |
-        set -euo pipefail
-        # Prefer the build output allure-results path (matches local dev)
-        PREFERRED="E2EShoppingAutomation/bin/Debug/net8.0/allure-results"
-        if [ -d "$PREFERRED" ]; then
-          ALLURE_DIR="$PREFERRED"
+        npm install -g allure-commandline --no-audit --no-fund --silent
+        
+        # Checking local build path for results
+        RESULTS_PATH="E2EShoppingAutomation/bin/Debug/net8.0/allure-results"
+        
+        if [ -d "$RESULTS_PATH" ]; then
+          allure generate "$RESULTS_PATH" -o AllureReport --clean
         else
-          # Fallback: find any allure-results in the workspace
-          ALLURE_DIR=$(find . -type d -name 'allure-results' -print -quit || true)
-        fi
-        if [ -z "$ALLURE_DIR" ]; then
-          echo "No allure-results directory found. Skipping Allure report generation."
-          exit 0
+          # Fallback search if path differs
+          FOUND_DIR=$(find . -type d -name "allure-results" | head -n 1)
+          allure generate "$FOUND_DIR" -o AllureReport --clean
         fi
 
-        echo "Found Allure results at: $ALLURE_DIR"
+    - name: Deploy to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./AllureReport
 
-        # Install Allure commandline via npm (works on ubuntu runners)
-        if ! command -v allure >/dev/null 2>&1; then
-          echo "Installing allure-commandline via npm"
-          npm install -g allure-commandline --no-audit --no-fund --silent || true
-        fi
-
-        mkdir -p E2EShoppingAutomation/AllureReport
-        # Generate the Allure HTML report
-        allure generate "$ALLURE_DIR" -o E2EShoppingAutomation/AllureReport --clean
-        echo "Allure report generated at E2EShoppingAutomation/AllureReport/index.html"
-
-    - name: Upload Allure Report
+    - name: Upload TRX Results (Backup)
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: allure-report
-        path: E2EShoppingAutomation/AllureReport/
-        if-no-files-found: warn
-        retention-days: 7
-
-    - name: Generate HTML Test Report
-      run: |
-        set -euo pipefail
-        echo "-- Debug: locate TRX files in workspace --"
-        TRX_LIST=$(find . -type f -name '*.trx' -print | tr '\n' ';' | sed 's/;$//')
-
-        if [ -z "$TRX_LIST" ]; then
-          echo "No TRX files found in workspace. Skipping HTML report generation."
-          exit 0
-        fi
-
-        echo "Found TRX files: $TRX_LIST"
-        mkdir -p E2EShoppingAutomation/Reports
-        mkdir -p E2EShoppingAutomation/Reports/history
-
-        if [ -x ./tools/reportgenerator ]; then
-          echo "Using ./tools/reportgenerator"
-          ./tools/reportgenerator -reports:"$TRX_LIST" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history
-        else
-          echo "./tools/reportgenerator not found or not executable. Trying 'dotnet tool run reportgenerator'"
-          dotnet tool run reportgenerator -- -reports:"$TRX_LIST" -targetdir:./E2EShoppingAutomation/Reports -reporttypes:"Html;HtmlSummary" -historydir:./E2EShoppingAutomation/Reports/history
-        fi
-
-    - name: Upload HTML report artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: html-report
-        path: E2EShoppingAutomation/Reports/
-        if-no-files-found: warn
-        retention-days: 7
-
-    - name: Upload Test Results (TRX)
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: E2EShoppingAutomation/TestResults/
-        if-no-files-found: warn
-        retention-days: 7
-
-    - name: Upload Screenshots
-      uses: actions/upload-artifact@v4
-      with:
-        name: screenshots
-        path: E2EShoppingAutomation/Screenshots/
-        if-no-files-found: warn
-        retention-days: 7
+        name: test-results-trx
+        path: TestResults/
